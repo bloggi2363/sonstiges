@@ -1,0 +1,317 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Meine Lernuhr</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout: Uhr als Held, darunter (iPad quer: daneben) ein ruhiges Aufgabenfeld */
+:root{
+  --paper:#EEF5F1; --card:#FFFFFF; --face:#FFFDF7;
+  --ink:#1E2B36; --ink-soft:#5A6A78; --line:#D3E2DB;
+  --hour:#1B6BB5; --minute:#E0532A; --sun:#F2B705;
+  --good:#2E8B57; --bad:#C23B22;
+  --hour-tint:rgba(27,107,181,.10); --minute-tint:rgba(224,83,42,.16);
+  --font-display:"Fredoka",ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
+  --font-body:"Nunito",ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
+  --r:22px; --shadow:0 10px 30px rgba(30,43,54,.09);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11181D; --card:#1A242B; --face:#222F38;
+  --ink:#EAF1EE; --ink-soft:#9DB0BA; --line:#2C3A42;
+  --hour:#5AA6EE; --minute:#FF7A52; --sun:#F5C842;
+  --good:#4CC285; --bad:#FF6B57;
+  --hour-tint:rgba(90,166,238,.16); --minute-tint:rgba(255,122,82,.22);
+  --shadow:0 10px 30px rgba(0,0,0,.35); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#11181D; --card:#1A242B; --face:#222F38;
+  --ink:#EAF1EE; --ink-soft:#9DB0BA; --line:#2C3A42;
+  --hour:#5AA6EE; --minute:#FF7A52; --sun:#F5C842;
+  --good:#4CC285; --bad:#FF6B57;
+  --hour-tint:rgba(90,166,238,.16); --minute-tint:rgba(255,122,82,.22);
+  --shadow:0 10px 30px rgba(0,0,0,.35); color-scheme:dark }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.45;
+  padding-block:14px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--font-display);font-weight:600;font-size:clamp(26px,4vw,34px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 .h{color:var(--hour)} h1 .m{color:var(--minute)}
+.stars{font-family:var(--font-display);font-size:20px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 14px;display:flex;gap:6px;align-items:center}
+.stars b{color:var(--sun);font-size:22px}
+
+.controls{display:flex;flex-direction:column;gap:10px}
+.seg{display:flex;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:5px;flex-wrap:wrap}
+.seg button{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--ink);font:800 16px var(--font-body);padding:11px 8px;border-radius:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.levels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.levels button{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:8px 4px;cursor:pointer;font:700 13px var(--font-body);display:flex;flex-direction:column;align-items:center;gap:1px}
+.levels button span{font:600 20px var(--font-display)}
+.levels button[aria-pressed="true"]{border-color:var(--hour);background:var(--hour-tint)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+@media (min-width:820px){.main{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}}
+.clockcard{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
+svg#clock{width:min(100%,560px);aspect-ratio:1;max-width:100%;touch-action:none;user-select:none;-webkit-user-select:none;display:block}
+.face{fill:var(--face);stroke:var(--ink);stroke-width:6}
+.tick{stroke:var(--ink-soft);stroke-width:2}
+.tick.big{stroke:var(--ink);stroke-width:5}
+.num{fill:var(--ink);font:600 34px var(--font-display);text-anchor:middle;dominant-baseline:central}
+.mnum{fill:var(--minute);font:800 15px var(--font-body);text-anchor:middle;dominant-baseline:central}
+.arc{fill:var(--minute-tint)}
+.hourHand{stroke:var(--hour);stroke-width:17;stroke-linecap:round}
+.minHand{stroke:var(--minute);stroke-width:10;stroke-linecap:round}
+.hit{stroke:transparent;stroke-width:54;stroke-linecap:round;pointer-events:stroke;fill:none}
+.cap{fill:var(--ink)}
+#handH{cursor:grab}
+svg.locked .hit{pointer-events:none}
+.legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:14px;color:var(--ink-soft)}
+.legend i{display:inline-block;width:22px;height:7px;border-radius:4px;vertical-align:middle;margin-right:6px}
+.toggles{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.chip{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:700 14px var(--font-body);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--minute);background:var(--minute-tint)}
+
+.panel{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.eyebrow{font:800 12px var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.say{font:600 clamp(28px,4.4vw,40px)/1.15 var(--font-display);margin:0;text-wrap:balance}
+.digital{font:600 26px var(--font-display);font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.hint{font-size:15px;color:var(--ink-soft);background:var(--paper);border-radius:14px;padding:10px 12px;margin:0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:16px;padding:13px 18px;font:800 17px var(--font-body);cursor:pointer;background:var(--ink);color:var(--paper)}
+.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn.go{background:var(--good);color:#fff}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opts button{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:14px 10px;font:600 19px var(--font-display);cursor:pointer;min-width:0}
+.opts button.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--card))}
+.opts button.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card))}
+.fb{font:700 17px var(--font-body);min-height:1.5em;margin:0}
+.fb.ok{color:var(--good)} .fb.no{color:var(--bad)}
+button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+footer{font-size:13px;color:var(--ink-soft);text-align:center}
+@media (prefers-reduced-motion:no-preference){.pop{animation:pop .35s ease}}
+@keyframes pop{0%{transform:scale(.92)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Meine <span class="h">Lern</span><span class="m">uhr</span></h1>
+    <div class="stars" aria-live="polite"><b>★</b><span id="starCount">0</span></div>
+  </header>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Modus">
+      <button id="mode-play" data-mode="play" aria-pressed="true">Ausprobieren</button>
+      <button id="mode-read" data-mode="read" aria-pressed="false">Ablesen</button>
+      <button id="mode-set" data-mode="set" aria-pressed="false">Einstellen</button>
+    </div>
+    <div class="levels" role="group" aria-label="Stufe">
+      <button id="lvl-1" data-lvl="1" aria-pressed="true"><span>1</span>volle Stunde</button>
+      <button id="lvl-2" data-lvl="2" aria-pressed="false"><span>2</span>halbe</button>
+      <button id="lvl-3" data-lvl="3" aria-pressed="false"><span>3</span>Viertel</button>
+      <button id="lvl-4" data-lvl="4" aria-pressed="false"><span>4</span>5 Minuten</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="clockcard">
+      <svg id="clock" viewBox="0 0 400 400" aria-label="Analoge Uhr">
+        <circle class="face" cx="200" cy="200" r="188"/>
+        <path id="arc" class="arc" d=""/>
+        <g id="ticks"></g>
+        <g id="mring"></g>
+        <g id="nums"></g>
+        <g id="handH">
+          <line class="hit" x1="200" y1="205" x2="200" y2="108"/>
+          <line class="hourHand" x1="200" y1="200" x2="200" y2="108" pointer-events="none"/>
+        </g>
+        <g id="handM">
+          <line class="hit" x1="200" y1="205" x2="200" y2="52"/>
+          <line class="minHand" x1="200" y1="200" x2="200" y2="52" pointer-events="none"/>
+        </g>
+        <circle class="cap" cx="200" cy="200" r="11" pointer-events="none"/>
+      </svg>
+      <div class="legend"><span><i style="background:var(--hour)"></i>kurz = Stunden</span><span><i style="background:var(--minute)"></i>lang = Minuten</span></div>
+      <div class="toggles">
+        <button class="chip" id="tgRing" aria-pressed="true">Minuten-Ring</button>
+        <button class="chip" id="tgArc" aria-pressed="true">Minuten-Bogen</button>
+      </div>
+    </div>
+
+    <section class="panel" id="panel" aria-live="polite"></section>
+  </div>
+
+  <footer>Tipp: Irgendwo aufs Zifferblatt tippen setzt den roten Minutenzeiger. Den blauen Stundenzeiger direkt ziehen.</footer>
+</div>
+
+<script>
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  const HW=['zwölf','eins','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf'];
+  const $=id=>document.getElementById(id);
+  const svg=$('clock'), panel=$('panel');
+  let t=180, mode='play', lvl=1, stars=0, target=null, lastTarget=-1, answered=false, ring=true, arcOn=true;
+
+  // ---------- Zifferblatt aufbauen
+  const P=(r,deg)=>{const a=(deg-90)*Math.PI/180;return [200+r*Math.cos(a),200+r*Math.sin(a)]};
+  for(let i=0;i<60;i++){
+    const big=i%5===0,[x1,y1]=P(big?166:174,i*6),[x2,y2]=P(182,i*6);
+    const l=document.createElementNS(NS,'line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('class','tick'+(big?' big':''));$('ticks').appendChild(l);
+  }
+  for(let h=1;h<=12;h++){
+    const [x,y]=P(124,h*30),tx=document.createElementNS(NS,'text');
+    tx.setAttribute('x',x);tx.setAttribute('y',y);tx.setAttribute('class','num');tx.textContent=h;$('nums').appendChild(tx);
+    const [mx,my]=P(152,h*30),mt=document.createElementNS(NS,'text');
+    mt.setAttribute('x',mx);mt.setAttribute('y',my);mt.setAttribute('class','mnum');mt.textContent=h===12?'0':h*5;$('mring').appendChild(mt);
+  }
+
+  // ---------- Sprache
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  function phrase(tt){
+    const h=Math.floor(tt/60)%12||12, m=tt%60, n=h%12+1, H=HW[h], N=HW[n];
+    switch(m){
+      case 0: return (h===1?'ein':H)+' Uhr';
+      case 5: return 'fünf nach '+H;
+      case 10: return 'zehn nach '+H;
+      case 15: return 'Viertel nach '+H;
+      case 20: return 'zwanzig nach '+H;
+      case 25: return 'fünf vor halb '+N;
+      case 30: return 'halb '+N;
+      case 35: return 'fünf nach halb '+N;
+      case 40: return 'zwanzig vor '+N;
+      case 45: return 'Viertel vor '+N;
+      case 50: return 'zehn vor '+N;
+      case 55: return 'fünf vor '+N;
+    }
+    return '';
+  }
+  const digital=tt=>(Math.floor(tt/60)%12||12)+':'+String(tt%60).padStart(2,'0');
+  function speak(text){
+    try{
+      const s=window.speechSynthesis; if(!s) return;
+      s.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang='de-DE'; u.rate=.9;
+      const v=s.getVoices().find(v=>/^de/i.test(v.lang)); if(v) u.voice=v;
+      s.speak(u);
+    }catch(e){}
+  }
+  function hintFor(tt){
+    const m=tt%60, h=Math.floor(tt/60)%12||12, N=HW[h%12+1];
+    if(m===0) return 'Der lange Zeiger steht oben auf der 12. Der kurze Zeiger zeigt genau auf die Stunde.';
+    if(m===30) return 'Halb '+N+': Bis '+N+' Uhr fehlt noch eine halbe Stunde. Der kurze Zeiger steht zwischen '+h+' und '+(h%12+1)+'.';
+    if(m===15) return 'Viertel nach: Der lange Zeiger ist eine Viertelrunde gelaufen und steht auf der 3.';
+    if(m===45) return 'Viertel vor: Nur noch eine Viertelrunde bis zur vollen Stunde. Der lange Zeiger steht auf der 9.';
+    return 'Der lange Zeiger steht auf der '+(m/5)+'. Das sind '+m+' Minuten.';
+  }
+
+  // ---------- Zeichnen
+  function draw(){
+    const m=t%60, ha=(t%720)/720*360, ma=m*6;
+    $('handH').setAttribute('transform','rotate('+ha+' 200 200)');
+    $('handM').setAttribute('transform','rotate('+ma+' 200 200)');
+    const arc=$('arc');
+    if(!arcOn||m===0){arc.setAttribute('d','');}
+    else{const [x,y]=P(140,ma);arc.setAttribute('d','M200 200 L200 60 A140 140 0 '+(ma>180?1:0)+' 1 '+x+' '+y+' Z');}
+    $('mring').style.display=ring?'':'none';
+    svg.classList.toggle('locked',mode==='read');
+    if(mode==='play') updatePlay();
+  }
+
+  // ---------- Zeiger bewegen
+  let drag=null;
+  function angleOf(ev){
+    const r=svg.getBoundingClientRect(), x=(ev.clientX-r.left)/r.width*400-200, y=(ev.clientY-r.top)/r.height*400-200;
+    let a=Math.atan2(x,-y)*180/Math.PI; return (a+360)%360;
+  }
+  function moveMinute(a){
+    const nm=Math.round(a/30)*5%60, pm=t%60; let d=nm-pm;
+    if(d>30) d-=60; if(d<-30) d+=60;
+    t=((t+d)%720+720)%720;
+  }
+  function moveHour(a){t=(Math.round(a/360*720/5)*5)%720;}
+  svg.addEventListener('pointerdown',ev=>{
+    if(mode==='read') return;
+    drag=ev.target.closest('#handH')?'h':'m';
+    try{svg.setPointerCapture(ev.pointerId);}catch(e){}
+    const a=angleOf(ev); drag==='h'?moveHour(a):moveMinute(a); draw(); ev.preventDefault();
+  });
+  svg.addEventListener('pointermove',ev=>{
+    if(!drag) return; const a=angleOf(ev); drag==='h'?moveHour(a):moveMinute(a); draw();
+  });
+  const end=()=>{drag=null;}; svg.addEventListener('pointerup',end); svg.addEventListener('pointercancel',end);
+
+  // ---------- Aufgaben
+  const step=()=>[60,30,15,5][lvl-1];
+  function randomTime(){
+    const s=step(); let x;
+    do{x=Math.floor(Math.random()*(720/s))*s;}while(x===lastTarget);
+    lastTarget=x; return x;
+  }
+  function addStar(){stars++;$('starCount').textContent=stars;const el=$('starCount').parentNode;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
+
+  function updatePlay(){
+    const p=cap(phrase(t));
+    $('pSay').textContent='Es ist '+phrase(t)+'.';
+    $('pDig').textContent=digital(t)+' Uhr';
+    $('pHint').textContent=hintFor(t);
+    $('pSay').dataset.say='Es ist '+phrase(t);
+  }
+  function renderPlay(){
+    panel.innerHTML='<div class="eyebrow">Ausprobieren</div><p class="say" id="pSay"></p><div class="digital" id="pDig"></div><p class="hint" id="pHint"></p>'+
+      '<div class="row"><button class="btn" id="pSpeak">Vorlesen</button><button class="btn alt" id="pRand">Zufällige Zeit</button></div>';
+    $('pSpeak').onclick=()=>speak($('pSay').dataset.say);
+    $('pRand').onclick=()=>{t=randomTime();draw();};
+    draw();
+  }
+  function renderRead(){
+    target=randomTime(); t=target; answered=false;
+    const opts=new Set([target]);
+    [target+60,target-60].forEach(x=>{if(opts.size<4) opts.add((x+720)%720);});
+    if(lvl>=2&&target%60!==0) opts.add(target-target%60); // häufiger Fehler: Minuten übersehen
+    while(opts.size<4) opts.add(Math.floor(Math.random()*(720/step()))*step());
+    const list=[...opts].slice(0,4).sort(()=>Math.random()-.5);
+    panel.innerHTML='<div class="eyebrow">Ablesen</div><p class="say">Wie spät ist es?</p><div class="opts" id="opts"></div><p class="fb" id="fb"></p>'+
+      '<div class="row"><button class="btn alt" id="rNext">Nächste Uhr</button></div>';
+    list.forEach((x,i)=>{
+      const b=document.createElement('button'); b.id='opt-'+i; b.textContent=cap(phrase(x));
+      b.onclick=()=>{
+        if(answered) return;
+        if(x===target){answered=true;b.classList.add('right');$('fb').className='fb ok';$('fb').textContent='Richtig! '+cap(phrase(target))+' ('+digital(target)+' Uhr).';addStar();speak(cap(phrase(target)));}
+        else{b.classList.add('wrong');b.disabled=true;$('fb').className='fb no';$('fb').textContent='Noch nicht. '+hintFor(target);}
+      };
+      $('opts').appendChild(b);
+    });
+    $('rNext').onclick=renderRead;
+    draw();
+  }
+  function renderSet(){
+    target=randomTime(); t=0; answered=false;
+    panel.innerHTML='<div class="eyebrow">Einstellen</div><p class="say">Stelle ein:<br>'+cap(phrase(target))+'</p>'+
+      '<p class="fb" id="fb"></p><div class="row"><button class="btn go" id="sCheck">Prüfen</button><button class="btn alt" id="sSpeak">Vorlesen</button><button class="btn alt" id="sTip">Tipp</button><button class="btn alt" id="sNext">Neue Aufgabe</button></div>';
+    $('sCheck').onclick=()=>{
+      if(t===target){if(!answered){answered=true;addStar();}$('fb').className='fb ok';$('fb').textContent='Super! Das ist '+phrase(target)+'.';speak('Super!');}
+      else{$('fb').className='fb no';$('fb').textContent='Noch nicht. Deine Uhr zeigt '+phrase(t)+'.';}
+    };
+    $('sSpeak').onclick=()=>speak(cap(phrase(target)));
+    $('sTip').onclick=()=>{$('fb').className='fb';$('fb').textContent='Digital: '+digital(target)+' Uhr. '+hintFor(target);};
+    $('sNext').onclick=renderSet;
+    draw();
+  }
+  function render(){({play:renderPlay,read:renderRead,set:renderSet})[mode]();}
+
+  document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
+    mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));render();
+  });
+  document.querySelectorAll('[data-lvl]').forEach(b=>b.onclick=()=>{
+    lvl=+b.dataset.lvl;document.querySelectorAll('[data-lvl]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    if(mode!=='play') render();
+  });
+  $('tgRing').onclick=e=>{ring=!ring;e.currentTarget.setAttribute('aria-pressed',ring);draw();};
+  $('tgArc').onclick=e=>{arcOn=!arcOn;e.currentTarget.setAttribute('aria-pressed',arcOn);draw();};
+
+  t=210; // Start: halb vier
+  render();
+})();
+</script>
+
+</body></html>
